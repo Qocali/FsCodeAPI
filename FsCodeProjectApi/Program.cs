@@ -5,6 +5,8 @@ using infrastructure.Interface.Repository;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Task.Rest.Api.Middlewares;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -16,7 +18,8 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IReminderRepo, ReminderRepo>();
 builder.Services.Configure<EmailConfiguration>(builder.Configuration.GetSection("EmailConfiguration"));
 builder.Services.AddSingleton<ITelegramService>(new TelegramService(builder.Configuration["TelegramBotToken"]));
-
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
 builder.Services.AddTransient<IEmailService, EmailService>();
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
@@ -34,7 +37,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
-
+app.UseMiddleware<ExceptionMiddleware>();
 app.MapControllers();
 
 app.Run();

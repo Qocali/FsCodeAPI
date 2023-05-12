@@ -55,7 +55,7 @@ namespace FsCodeProjectApi.Controllers
             }
             var currentTime = DateTime.Now;
             var timeSpan = reminder.SendAt - currentTime;
-            ( Task.Delay(timeSpan)).ContinueWith(async _ =>
+            (System.Threading.Tasks.Task.Delay(timeSpan)).ContinueWith(async _ =>
             {
                 // Retrieve the reminder from the repository
                 var savedReminder = _repository.GetById(reminder.Id);

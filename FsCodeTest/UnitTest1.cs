@@ -15,7 +15,7 @@ namespace FsCodeTest
         }
 
         [Test]
-        public async Task GetAllReminderAsync()
+        public async System.Threading.Tasks.Task GetAllReminderAsync()
         {
             var mockRepository = new Mock<IReminderRepo>();
             var expectedReminders = new List<Reminder>
