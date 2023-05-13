@@ -20,6 +20,7 @@ builder.Services.Configure<EmailConfiguration>(builder.Configuration.GetSection(
 builder.Services.AddSingleton<ITelegramService>(new TelegramService(builder.Configuration["TelegramBotToken"]));
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddTransient<IEmailService, EmailService>();
 builder.Services.AddDbContext<AppDbContext>(options =>
 {

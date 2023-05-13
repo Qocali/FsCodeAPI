@@ -25,7 +25,7 @@ namespace FsCodeTest
                 // Add more sample reminders as needed
             };
             mockRepository.Setup(r => r.Read()).ReturnsAsync(expectedReminders);
-            var controller = new ReminderController(mockRepository.Object,null,null);
+            var controller = new ReminderController(mockRepository.Object,null,null,null);
 
             // Act
             var result = await controller.GetAllReminders();

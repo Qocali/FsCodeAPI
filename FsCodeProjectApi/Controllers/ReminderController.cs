@@ -1,5 +1,7 @@
 ﻿using Application.Interface.Repository;
 using Application.Interface.Services;
+using AutoMapper;
+using Domain.Dtos;
 using Domain.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -14,11 +16,13 @@ namespace FsCodeProjectApi.Controllers
         private readonly IReminderRepo _repository;
         private readonly IEmailService _emailService;
         private readonly ITelegramService _telegramService;
-        public ReminderController(IReminderRepo repository, IEmailService emailService, ITelegramService telegramService)
+        private readonly IMapper _mapper;
+        public ReminderController(IReminderRepo repository, IMapper mapper, IEmailService emailService, ITelegramService telegramService)
         {
             _repository = repository;
             _emailService = emailService;
             _telegramService = telegramService;
+            _mapper= mapper;
         }
 
         [HttpGet]
@@ -28,7 +32,7 @@ namespace FsCodeProjectApi.Controllers
             return Ok(reminders);
         }
         [HttpPost]
-        public async Task<IActionResult> CreateReminder(Reminder reminder)
+        public async Task<IActionResult> CreateReminder(CreateReminderDto reminder)
         {
             if (!ModelState.IsValid)
             {
@@ -55,10 +59,11 @@ namespace FsCodeProjectApi.Controllers
             }
             var currentTime = DateTime.Now;
             var timeSpan = reminder.SendAt - currentTime;
+            var remin = _mapper.Map<Reminder>(reminder);
             (System.Threading.Tasks.Task.Delay(timeSpan)).ContinueWith(async _ =>
             {
                 // Retrieve the reminder from the repository
-                var savedReminder = _repository.GetById(reminder.Id);
+                var savedReminder = _repository.GetById(remin.Id);
 
                 if (reminder.Method == "email")
                 {
@@ -69,7 +74,7 @@ namespace FsCodeProjectApi.Controllers
                     await _telegramService.SendMessageAsync(reminder.To, reminder.Content);
                 }
             });
-            await _repository.Create(reminder);
+            await _repository.Create(remin);
             return Ok();
         }
 
