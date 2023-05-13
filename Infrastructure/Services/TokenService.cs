@@ -21,22 +21,31 @@ namespace Infrastructure.Services
             _configuration = configuration;
         }
 
-        public string GenerateToken(User user)
+        
+        public string GenerateToken(Domain.Entities.User user)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.UTF8.GetBytes(_configuration["Jwt:SecretKey"]);
+
+            if (key.Length < 16) // or key.Length * 8 < 128 for bit comparison
+            {
+                throw new Exception("Invalid key length. The key must be at least 16 bytes.");
+            }
+
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new[]
                 {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.Username)
-            }),
+        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+        new Claim(ClaimTypes.Name, user.Username)
+    }),
                 Expires = DateTime.UtcNow.AddHours(int.Parse(_configuration["Jwt:ExpirationHours"])),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256)
             };
+
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
+
         }
     }
 }

@@ -3,6 +3,7 @@ using Domain.Entities;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using System.Net;
 using System.Threading.Tasks;
 using static System.Net.Mime.MediaTypeNames;
@@ -34,11 +35,12 @@ namespace Task.Rest.Api.Middlewares
         {
             context.Response.ContentType = "application/json";
             context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-            await context.Response.WriteAsync(new Response()
+            string jsonResponse = JsonConvert.SerializeObject(new Response()
             {
                 StatusCode = context.Response.StatusCode,
                 Message = "Internal Server Error from the custom middleware."
-            }.ToString());
+            });
+            await context.Response.WriteAsync(jsonResponse);
         }
     }
 }

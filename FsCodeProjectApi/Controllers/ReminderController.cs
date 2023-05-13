@@ -1,9 +1,12 @@
 ﻿using Application.Interface.Repository;
 using Application.Interface.Services;
+using Application.Validation;
 using AutoMapper;
 using Domain.Dtos;
 using Domain.Entities;
+using FluentValidation;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System;
 
@@ -34,6 +37,15 @@ namespace FsCodeProjectApi.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateReminder(CreateReminderDto reminder)
         {
+            var ReminderValidator = new ReminderValidator();
+
+            // Call Validate or ValidateAsync and pass the object which needs to be validated
+            var result = ReminderValidator.Validate(reminder);
+
+            if (!result.IsValid)
+            {
+                return BadRequest("have a false data value!!!");
+            }
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);

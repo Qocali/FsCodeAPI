@@ -12,7 +12,7 @@ namespace Infrastructure.Services
     {
         private readonly List<User> _users = new List<User>
     {
-        new User { Id = 1, Username = "user1", Password = "password1" },
+        new User { Id = 1, Username = "Qochali", Password = "Babayev" },
         new User { Id = 2, Username = "user2", Password = "password2" }
     };
 

@@ -1,9 +1,14 @@
 using Application.Interface.Repository;
 using Application.Interface.Services;
+using Application.Validation;
+using Domain.Dtos;
+using Domain.Entities;
+using FluentValidation;
 using infrastructure.DAL;
 using infrastructure.Interface.Repository;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -43,8 +48,11 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("your_secret_key"))
     };
 });
+builder.Services.AddScoped<IValidator<CreateReminderDto>, ReminderValidator>();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddTransient<IEmailService, EmailService>();
+builder.Services.AddTransient<IUserService, UserService>();
+builder.Services.AddTransient<ITokenService, TokenService>();
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default"));
