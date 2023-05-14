@@ -1,9 +1,11 @@
 using Application.Interface.Repository;
 using Application.Interface.Services;
 using Application.Validation;
+using AspNetCoreRateLimit;
 using Domain.Dtos;
 using Domain.Entities;
 using FluentValidation;
+using FsCodeProjectApi.Middlewares;
 using infrastructure.DAL;
 using infrastructure.Interface.Repository;
 using Infrastructure.Services;
@@ -27,6 +29,10 @@ builder.Services.AddScoped<IReminderRepo, ReminderRepo>();
 builder.Services.Configure<EmailConfiguration>(builder.Configuration.GetSection("EmailConfiguration"));
 builder.Services.AddSingleton<ITelegramService>(new TelegramService(builder.Configuration["TelegramBotToken"]));
 builder.Logging.ClearProviders();
+builder.Services.AddMemoryCache();
+builder.Services.Configure<Domain.Entities.RateLimitOptions>(builder.Configuration.GetSection("RateLimit"));
+
+// Other service configurations...
 builder.Logging.AddConsole();
 builder.Services.AddAuthentication(options =>
 {
@@ -68,6 +74,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
+app.UseMiddleware<RateLimitMiddleware>();
 app.UseAuthorization();
 app.UseAuthorization();
 app.UseMiddleware<ExceptionMiddleware>();
