@@ -10,6 +10,7 @@ using static Org.BouncyCastle.Math.EC.ECCurve;
 using System.Threading.Tasks;
 using AutoMapper;
 using Application.mapping;
+using Microsoft.AspNetCore.Hosting;
 
 namespace FsCodeTest
 {
@@ -19,16 +20,19 @@ namespace FsCodeTest
         private Mock<IReminderRepo> _repositoryMock;
         private Mock<IEmailService> _emailServiceMock;
         private Mock<ITelegramService> _telegramServiceMock;
+        private Mock<IWebHostEnvironment> _environment;
         [SetUp]
         public void Setup()
         {
             _repositoryMock = new Mock<IReminderRepo>();
             _emailServiceMock = new Mock<IEmailService>();
             _telegramServiceMock = new Mock<ITelegramService>();
+            _environment=new Mock<IWebHostEnvironment>();
             var config = new MapperConfiguration(cfg => cfg.AddProfile<Reminderprofile>());
             var mapper = config.CreateMapper();
             mapper.Map<Reminder>(It.IsAny<CreateReminderDto>());
             _controller = new ReminderController(
+                _environment.Object,
                 _repositoryMock.Object,
                 mapper,
                 _emailServiceMock.Object,
@@ -59,7 +63,7 @@ namespace FsCodeTest
                 // Add more sample reminders as needed
             };
             mockRepository.Setup(r => r.Read()).ReturnsAsync(expectedReminders);
-            var controller = new ReminderController(mockRepository.Object,null,null,null);
+            var controller = new ReminderController(null,mockRepository.Object,null,null,null);
 
             // Act
             var result = await controller.GetAllReminders();

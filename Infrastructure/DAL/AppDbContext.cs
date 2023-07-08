@@ -15,5 +15,6 @@ namespace infrastructure.DAL
 
         }
         public DbSet<Reminder> Reminders { get; set; }
+        public DbSet<Products> Products { get; set; }
     }
 }

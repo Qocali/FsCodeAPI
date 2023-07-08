@@ -10,6 +10,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using AspNetCoreRateLimit;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using OfficeOpenXml;
 
 namespace FsCodeProjectApi.Controllers
 {
@@ -21,12 +23,14 @@ namespace FsCodeProjectApi.Controllers
         private readonly IEmailService _emailService;
         private readonly ITelegramService _telegramService;
         private readonly IMapper _mapper;
-        public ReminderController(IReminderRepo repository, IMapper mapper, IEmailService emailService, ITelegramService telegramService)
+        private readonly IWebHostEnvironment _environment;
+        public ReminderController(IWebHostEnvironment environment,IReminderRepo repository, IMapper mapper, IEmailService emailService, ITelegramService telegramService)
         {
             _repository = repository;
             _emailService = emailService;
             _telegramService = telegramService;
             _mapper= mapper;
+            _environment = environment;
         }
 
         [HttpGet]
@@ -34,6 +38,20 @@ namespace FsCodeProjectApi.Controllers
         {
             var reminders =await _repository.Read();
             return Ok(reminders);
+        }
+        [HttpGet("{page}")]
+        public async Task<IActionResult> Getpagination(int page,int pageresult)
+        {
+            var reminder = _repository.Read();
+           var pagecount = Math.Ceiling((decimal)reminder.Result.Count/pageresult);
+            var reminder2=_repository.Read().Result.Skip((page-1)*pageresult).Take(pageresult).ToList();
+            var response=new ReminderResponse
+            {
+                Reminders=reminder2,
+                CurrentPage=page,
+                Pages= (int)pagecount
+            };
+            return Ok(response);
         }
         [HttpPost]
         public async Task<IActionResult> CreateReminder(CreateReminderDto reminder)
@@ -139,13 +157,80 @@ namespace FsCodeProjectApi.Controllers
                 return false;
             }
         }
+        
 
+        [HttpPost("file upload")]
+        public async Task<IActionResult> Upload(IFormFile file)
+        {
+            if (file != null && file.Length > 0)
+            {
+                // Generate a unique file name to prevent conflicts
+                var fileName = Path.GetFileName(file.FileName);
+                var uploadDirectory = Path.Combine(_environment.ContentRootPath, "uploads");
+
+                // Create the directory if it doesn't exist
+                Directory.CreateDirectory(uploadDirectory);
+
+                var filePath = Path.Combine(uploadDirectory, fileName);
+
+                // Save the file to the server
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                // Optionally, process the uploaded file here
+
+                return Ok("File uploaded successfully.");
+            }
+
+            return BadRequest("No file was uploaded.");
+        }
         private bool IsValidChatId(string chatId)
         {
             // Add your validation logic for chat IDs here
             // e.g., check if the chat ID exists in the Telegram system
             // For simplicity, we assume any non-empty string is a valid chat ID
             return !string.IsNullOrEmpty(chatId);
+        }
+        [HttpGet("export")]
+        public async Task<IActionResult> ExportReminderAsync()
+        {
+            // Retrieve your product data from the database or any other source
+            var reminders = await _repository.Read();
+
+            using (var package = new ExcelPackage())
+            {
+                var worksheet = package.Workbook.Worksheets.Add("Reminders");
+
+                // Add headers
+                worksheet.Cells["A1"].Value = "Content";
+                worksheet.Cells["B1"].Value = "Method";
+                worksheet.Cells["C1"].Value = "To";
+
+                // Add data rows
+                var row = 2;
+                foreach (var item in reminders)
+                {
+                    worksheet.Cells[row, 1].Value = item.Content;
+                    worksheet.Cells[row, 2].Value = item.Method;
+                    worksheet.Cells[row, 3].Value = item.To;
+                    row++;
+                }
+
+                // Auto-fit columns
+                worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
+
+                // Generate the Excel file contents
+                var fileContents = package.GetAsByteArray();
+
+                // Set the content type and file name for the response
+                var contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                var fileName = "Reminder.xlsx";
+
+                // Return the Excel file as the response
+                return File(fileContents, contentType, fileName);
+            }
         }
     }
 }
